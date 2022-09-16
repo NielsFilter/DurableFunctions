@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -12,17 +11,17 @@ using Newtonsoft.Json;
 
 namespace DurableFunctions.FanOutFanIn;
 
-public static partial class FanOutFanInFunction
+public static class FanOutFanInFunction
 {
     [FunctionName("FanOutFanIn_HttpStart")]
     public static async Task<HttpResponseMessage> HttpStart(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")]
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post")]
         HttpRequestMessage req,
         [DurableClient] IDurableOrchestrationClient starter,
         ILogger log)
     {
         var body = await req.Content!.ReadAsStringAsync();
-        var input = JsonConvert.DeserializeObject<PrimeNumberInput>(body);
+        var input = JsonConvert.DeserializeObject<SentimentUserInput>(body);
         
         var instanceId = await starter.StartNewAsync("FanOutFanIn", input);
 
@@ -35,47 +34,22 @@ public static partial class FanOutFanInFunction
     [AllowAnonymous]
     [FunctionName("FanOutFanIn")]
     public static async Task RunOrchestrator(
-        [OrchestrationTrigger] IDurableOrchestrationContext context)
+        [OrchestrationTrigger] IDurableOrchestrationContext context,
+        ILogger log)
     {
-        var tasks = new List<Task<PrimeNumberResult>>();
-        var input = context.GetInput<PrimeNumberInput>();
-
-        Console.WriteLine("hello");
+        var input = context.GetInput<SentimentUserInput>();
+        log.LogInformation($"Found {input.NumberOfUsers} users to queue");
 
         // Get a list of N work items to process in parallel.
-        for (var i = input.Start; i <= input.Stop; i++)
+        var tasks = new List<Task<SentimentResult>>();
+        for (var userId = 1; userId <= input.NumberOfUsers; userId++)
         {
-            tasks.Add(context.CallActivityAsync<PrimeNumberResult>("PrimeNumberChecker", i));
+            tasks.Add(context.CallActivityAsync<SentimentResult>("CalculateBuyProbability", userId));
         }
-        
+
         await Task.WhenAll(tasks);
         
         var results = tasks.Select(x => x.Result);
-        await context.CallActivityAsync<int>("PrintPrimeNumberResult", results);
-    }
-
-    [FunctionName("PrimeNumberChecker")]
-    public static async Task<PrimeNumberResult> PrimeNumberChecker([ActivityTrigger] int number, ILogger log)
-    {
-        var rnd = new Random();
-        await Task.Delay(rnd.Next(0, 60_000)); // simulate some work here...
-        log.LogInformation($"Check if {number} is prime");
-        return new PrimeNumberResult
-        {
-            Number = number,
-            IsPrime = number.IsPrime()
-        };
-    }
-    
-    [FunctionName("PrintPrimeNumberResult")]
-    public static Task PrintPrimeNumberResult([ActivityTrigger] List<PrimeNumberResult> results, ILogger log)
-    {
-        log.LogInformation($"Done checking prime numbers. Here's the result");
-        foreach (var resultItem in results)
-        {
-            log.LogInformation($"{resultItem.Number}\t{resultItem.IsPrime}");
-        }
-
-        return Task.CompletedTask;
+        await context.CallActivityAsync("PrintReport", results);
     }
 }
