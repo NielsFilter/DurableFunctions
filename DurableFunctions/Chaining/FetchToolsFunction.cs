@@ -12,8 +12,8 @@ public class FetchToolsFunction
     public static async Task<ToolsResponse> FetchTools([ActivityTrigger] IDurableActivityContext context, ILogger log)
     {
         log.LogInformation("Fetching tools");
-        await Task.Delay(30_000);
-        return new ToolsResponse()
+        await Task.Delay(RobotConstants.WorkflowStepDelay);
+        var tools = new ToolsResponse()
         {
             MyTools = new List<string>()
             {
@@ -27,6 +27,10 @@ public class FetchToolsFunction
                 "Toolbox"
             }
         };
+        log.LogInformation($"Found my {string.Join(", ", tools.MyTools)}");
+        log.LogInformation($"Borrowing my friend's {string.Join(", ", tools.MyFriendsTools)}");
+
+        return tools;
     }
 }
 

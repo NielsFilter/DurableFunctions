@@ -8,28 +8,20 @@ namespace DurableFunctions.Chaining;
 public static class BuildShellFunction
 {
     [FunctionName(nameof(BuildShell))]
-    public static async Task<BuildShellResponse> BuildShell([ActivityTrigger] BuildShellInput buildInput, ILogger log)
+    public static async Task<RobotResponse> BuildShell([ActivityTrigger] BuildShellInput buildInput, ILogger log)
     {
         log.LogInformation("Building shell!");
-        await Task.Delay(30_000);
-        return new BuildShellResponse
+        await Task.Delay(RobotConstants.WorkflowStepDelay);
+        
+        var result = new RobotResponse
         {
             IsEpic = true,
             IsSolid = true,
-            IsProgrammed = false
+            IsProgrammed = false,
+            IsTested = false
         };
+        
+        log.LogInformation($"Shell built! Epic: {result.IsEpic} Solid: {result.IsSolid}");
+        return result;
     }
-}
-
-public class BuildShellInput
-{
-    public ToolsResponse Tools { get; set; }
-    public PartsResponse Parts { get; set; }
-}
-
-public class BuildShellResponse
-{
-    public bool IsSolid { get; set; }
-    public bool IsEpic { get; set; }
-    public bool IsProgrammed { get; set; }
 }

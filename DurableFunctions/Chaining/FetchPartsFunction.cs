@@ -12,8 +12,8 @@ public static class FetchPartsFunction
     public static async Task<PartsResponse> FetchParts([ActivityTrigger] IDurableActivityContext context, ILogger log)
     {
         log.LogInformation("Fetching parts");
-        await Task.Delay(30_000);
-        return new PartsResponse()
+        await Task.Delay(RobotConstants.WorkflowStepDelay);
+        var parts = new PartsResponse()
         {
             MyParts = new List<string>()
             {
@@ -22,6 +22,8 @@ public static class FetchPartsFunction
                 "Duct tape"
             }
         };
+        log.LogInformation($"Found parts {string.Join(", ", parts)}");
+        return parts;
     }
 }
 

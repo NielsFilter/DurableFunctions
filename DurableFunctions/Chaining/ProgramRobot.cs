@@ -9,12 +9,13 @@ namespace DurableFunctions.Chaining;
 public static class ProgramRobotFunction
 {
     [FunctionName(nameof(ProgramRobot))]
-    public static async Task<BuildShellResponse> ProgramRobot([ActivityTrigger] BuildShellResponse shell, ILogger log)
+    public static async Task<RobotResponse> ProgramRobot([ActivityTrigger] RobotResponse robot, ILogger log)
     {
         log.LogInformation("Writing some code");
-        await Task.Delay(30_000);
+        await Task.Delay(RobotConstants.WorkflowStepDelay);
         
-        shell.IsProgrammed = true;
-        return shell;
+        robot.IsProgrammed = true;
+        log.LogInformation($"Robot programmed: {robot.IsProgrammed}");
+        return robot;
     }
 }
