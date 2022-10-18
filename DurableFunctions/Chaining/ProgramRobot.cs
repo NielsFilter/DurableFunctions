@@ -1,21 +1,26 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
 
 namespace DurableFunctions.Chaining;
 
-public static class ProgramRobotFunction
+public class ProgramRobotFunction
 {
-    [FunctionName(nameof(ProgramRobot))]
-    public static async Task<RobotResponse> ProgramRobot([ActivityTrigger] RobotResponse robot, ILogger log)
+    private readonly ILogger _logger;
+
+    public ProgramRobotFunction(ILogger logger)
     {
-        log.LogInformation("Writing some code");
+        _logger = logger;
+    }
+    
+    [Function(nameof(ProgramRobot))]
+    public async Task<RobotResponse> ProgramRobot([ActivityTrigger] RobotResponse robot)
+    {
+        _logger.LogInformation("Writing some code");
         await Task.Delay(RobotConstants.WorkflowStepDelay);
         
         robot.IsProgrammed = true;
-        log.LogInformation($"Robot programmed: {robot.IsProgrammed}");
+        _logger.LogInformation($"Robot programmed: {robot.IsProgrammed}");
         return robot;
     }
 }

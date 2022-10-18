@@ -1,12 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <AzureFunctionsVersion>V4</AzureFunctionsVersion>
+        <OutputType>Exe</OutputType>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage.Queues" Version="5.0.1" />
-        <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.1.1" />
-        <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.DurableTask" Version="2.8.0" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.11.0-preview2" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.DurableTask" Version="0.4.1-beta" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.0.13" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage" Version="5.0.1" />
+        <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.8.0-preview2" />
+        <PackageReference Include="Microsoft.Azure.DurableTask.Core" Version="2.11.1" />
+        <PackageReference Include="Azure.Storage.Blobs" Version="12.14.0" />
+        <PackageReference Include="HtmlTableHelper" Version="1.2.2" />
+        <PackageReference Include="RandomNameGeneratorLibrary" Version="1.2.2" />
+        <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.21.0" />
     </ItemGroup>
     <ItemGroup>
         <None Update="host.json">
@@ -14,7 +24,6 @@
         </None>
         <None Update="local.settings.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <CopyToPublishDirectory>Never</CopyToPublishDirectory>
         </None>
     </ItemGroup>
 </Project>

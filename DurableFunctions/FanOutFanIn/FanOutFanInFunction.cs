@@ -1,50 +1,52 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace DurableFunctions.FanOutFanIn;
 
-public static class FanOutFanInFunction
+public class FanOutFanInFunction
 {
-    [FunctionName("FanOutFanIn_HttpStart")]
-    public static async Task<HttpResponseMessage> HttpStart(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "post")]
-        HttpRequestMessage req,
-        [DurableClient] IDurableOrchestrationClient starter,
-        ILogger log)
+    private readonly ILogger _logger;
+
+    public FanOutFanInFunction(ILogger logger)
     {
-        var body = await req.Content!.ReadAsStringAsync();
-        var input = JsonConvert.DeserializeObject<SentimentUserInput>(body);
-        
-        var instanceId = await starter.StartNewAsync("FanOutFanIn", input);
-
-        log.LogInformation($"Started orchestration with ID = '{instanceId}'.");
-
-        return starter.CreateCheckStatusResponse(req, instanceId);
+        _logger = logger;
     }
     
-    
-    [AllowAnonymous]
-    [FunctionName("FanOutFanIn")]
-    public static async Task RunOrchestrator(
-        [OrchestrationTrigger] IDurableOrchestrationContext context,
-        ILogger log)
+    [Function("FanOutFanIn_HttpStart")]
+    public async Task<HttpResponseData> HttpStart(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post")]
+        HttpRequestData req,
+        [DurableClient] DurableClientContext starter)
     {
-        var input = context.GetInput<SentimentUserInput>();
-        log.LogInformation($"Found {input.NumberOfUsers} users to queue");
+        var input = await req.GetFromBody<SentimentUserInput>();
+
+        try
+        {
+            var instanceId = await starter.Client.ScheduleNewOrchestrationInstanceAsync(nameof(FanOutFanInFunction), input: input);
+          //  await starter.Client.WaitForInstanceCompletionAsync(instanceId, CancellationToken.None);
+
+            return starter.CreateCheckStatusResponse(req, instanceId);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+    
+    [Function(nameof(FanOutFanInFunction))]
+    public async Task RunOrchestrator([OrchestrationTrigger] TaskOrchestrationContext context)
+    {
+        var input = context.GetContextInput<SentimentUserInput>();
+        _logger.LogInformation($"Found {input.NumberOfUsers} users to queue");
 
         // Get a list of N work items to process in parallel.
         var tasks = new List<Task<SentimentResult>>();
         for (var userId = 1; userId <= input.NumberOfUsers; userId++)
         {
-            tasks.Add(context.CallActivityAsync<SentimentResult>("CalculateBuyProbability", userId));
+            tasks.Add(context.CallActivityAsync<SentimentResult>(nameof(CalculateBuyProbability), userId));
         }
 
         await Task.WhenAll(tasks);

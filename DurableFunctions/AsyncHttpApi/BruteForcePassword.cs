@@ -1,19 +1,14 @@
-using System;
-using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
-using DurableFunctions.Chaining;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Extensions.Logging;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.DurableTask;
 
 namespace DurableFunctions.AsyncHttpApi;
 
 public class BruteForcePasswordFunction
 {
-    [FunctionName(nameof(BruteForcePassword))]
-    public async Task<string> BruteForcePassword([ActivityTrigger] IDurableActivityContext context, ILogger log)
+    [Function(nameof(BruteForcePassword))]
+    public async Task<string> BruteForcePassword([ActivityTrigger] TaskActivityContext context)
     {
         var rnd = new Random();
         var iterations = rnd.Next(5, 100);

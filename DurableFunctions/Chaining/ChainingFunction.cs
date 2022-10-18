@@ -1,43 +1,33 @@
-using System;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
 
 namespace DurableFunctions.Chaining;
 
-public static class ChainingFunction
+public class ChainingFunction
 {
-    [FunctionName("ChainingFunction_HttpStart")]
-    public static async Task<HttpResponseMessage> HttpStart(
+    [Function("ChainingFunction_HttpStart")]
+    public async Task<HttpResponseData> HttpStart(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")]
-        HttpRequestMessage req,
-        [DurableClient] IDurableOrchestrationClient starter,
-        ILogger log)
+        HttpRequestData req,
+        [DurableClient] DurableClientContext starter)
     {
-        var instanceId = await starter.StartNewAsync("ChainingFunction");
+        var instanceId = await starter.Client.ScheduleNewOrchestrationInstanceAsync(nameof(ChainingFunction));
+        
         return starter.CreateCheckStatusResponse(req, instanceId);
     }
 
-    [FunctionName("ChainingFunction")]
-    public static async Task RunOrchestrator(
-        [OrchestrationTrigger] IDurableOrchestrationContext context,
-        ILogger logger)
+    [Function(nameof(ChainingFunction))]
+    public async Task RunOrchestrator([OrchestrationTrigger] TaskOrchestrationContext context)
     {
-        var tools = await context.CallActivityAsync<ToolsResponse>(nameof(FetchToolsFunction.FetchTools), null);
-        var parts = await context.CallActivityAsync<PartsResponse>(nameof(FetchPartsFunction.FetchParts), null);
+        var tools = await context.CallActivityAsync<ToolsResponse>(nameof(FetchToolsFunction.FetchTools));
+        var parts = await context.CallActivityAsync<PartsResponse>(nameof(FetchPartsFunction.FetchParts));
 
         var buildInput = new BuildShellInput { Tools = tools, Parts = parts };
 
         var robot = await context.CallActivityAsync<RobotResponse>(nameof(BuildShellFunction.BuildShell), buildInput);
         robot = await context.CallActivityAsync<RobotResponse>(nameof(ProgramRobotFunction.ProgramRobot), robot);
         robot = await context.CallActivityAsync<RobotResponse>(nameof(TestRobotFunction.TestRobot), robot);
-
-        logger.LogInformation("Robot is complete!");
     }
 }

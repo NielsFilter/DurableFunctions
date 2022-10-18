@@ -1,24 +1,22 @@
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 
 namespace DurableFunctions.DurableEntities;
 
 public class ReviewersApproved
 {
-    [FunctionName("ReviewersApproved")]
-    public static async Task<HttpResponseMessage> HttpStart(
+    [Function(nameof(ReviewersApproved))]
+    public static async Task<HttpResponseData> HttpStart(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "PR/{prId}/ReviewersApproved")] HttpRequestMessage req,
         int prId,
-        [DurableClient] IDurableEntityClient entityClient,
+        //TODO: [DurableClient] IDurableEntityClient entityClient,
         ILogger log)
     {
-        var entity = new EntityId("PeerReviewAction", prId.ToString());
-        await entityClient.SignalEntityAsync(entity, "PrAction", PeerReviewActionTypes.ReviewersApproved);
-        return req.CreateResponse(HttpStatusCode.OK, "Done");
+        //TODO: Entity
+        throw new NotImplementedException();
+        // var entity = new EntityId("PeerReviewAction", prId.ToString());
+        // await entityClient.SignalEntityAsync(entity, "PrAction", PeerReviewActionTypes.ReviewersApproved);
+        // return req.CreateResponse(HttpStatusCode.OK, "Done");
     }
 }

@@ -1,15 +1,20 @@
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
 namespace DurableFunctions.RequestApproval;
 
-public static class FindNewFriendFunction
+public class FindNewFriendFunction
 {
-    [FunctionName(nameof(FindNewFriend))]
-    public static async Task FindNewFriend([ActivityTrigger] string name, ILogger log)
+    private readonly ILogger _logger;
+
+    public FindNewFriendFunction(ILogger logger)
     {
-        log.LogInformation("Find another friend...");
+        _logger = logger;
+    }
+    
+    [Function(nameof(FindNewFriend))]
+    public async Task FindNewFriend([ActivityTrigger] string name, ILogger log)
+    {
+        _logger.LogInformation("Find another friend...");
     }
 }

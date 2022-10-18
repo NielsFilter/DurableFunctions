@@ -1,17 +1,22 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
 
 namespace DurableFunctions.Chaining;
 
 public class FetchToolsFunction
 {
-    [FunctionName(nameof(FetchTools))]
-    public static async Task<ToolsResponse> FetchTools([ActivityTrigger] IDurableActivityContext context, ILogger log)
+    private readonly ILogger _logger;
+
+    public FetchToolsFunction(ILogger logger)
     {
-        log.LogInformation("Fetching tools");
+        _logger = logger;
+    }
+    
+    [Function(nameof(FetchTools))]
+    public async Task<ToolsResponse> FetchTools([ActivityTrigger] TaskActivityContext context)
+    {
+        _logger.LogInformation("Fetching tools");
         await Task.Delay(RobotConstants.WorkflowStepDelay);
         var tools = new ToolsResponse()
         {
@@ -27,15 +32,9 @@ public class FetchToolsFunction
                 "Toolbox"
             }
         };
-        log.LogInformation($"Found my {string.Join(", ", tools.MyTools)}");
-        log.LogInformation($"Borrowing my friend's {string.Join(", ", tools.MyFriendsTools)}");
+        _logger.LogInformation($"Found my {string.Join(", ", tools.MyTools)}");
+        _logger.LogInformation($"Borrowing my friend's {string.Join(", ", tools.MyFriendsTools)}");
 
         return tools;
     }
-}
-
-public class ToolsResponse
-{
-    public List<string> MyTools { get; set; }
-    public List<string> MyFriendsTools { get; set; }
 }

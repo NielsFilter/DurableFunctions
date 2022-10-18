@@ -1,7 +1,7 @@
-namespace DurableFunctions.FanOutFanIn;
+namespace Microsoft.DurableTask;
 
 public class SentimentResult
 {
-    public int UserId { get; set; }
+    public string User { get; set; }
     public int Sentiment { get; set; }
 }

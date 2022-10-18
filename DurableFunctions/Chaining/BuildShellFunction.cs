@@ -1,16 +1,22 @@
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
 
 namespace DurableFunctions.Chaining;
 
-public static class BuildShellFunction
+public class BuildShellFunction
 {
-    [FunctionName(nameof(BuildShell))]
-    public static async Task<RobotResponse> BuildShell([ActivityTrigger] BuildShellInput buildInput, ILogger log)
+    private readonly ILogger _logger;
+
+    public BuildShellFunction(ILogger logger)
     {
-        log.LogInformation("Building shell!");
+        _logger = logger;
+    }
+    
+    [Function(nameof(BuildShell))]
+    public async Task<RobotResponse> BuildShell([ActivityTrigger] BuildShellInput buildInput)
+    {
+        _logger.LogInformation("Building shell!");
         await Task.Delay(RobotConstants.WorkflowStepDelay);
         
         var result = new RobotResponse
@@ -21,7 +27,7 @@ public static class BuildShellFunction
             IsTested = false
         };
         
-        log.LogInformation($"Shell built! Epic: {result.IsEpic} Solid: {result.IsSolid}");
+        _logger.LogInformation($"Shell built! Epic: {result.IsEpic} Solid: {result.IsSolid}");
         return result;
     }
 }

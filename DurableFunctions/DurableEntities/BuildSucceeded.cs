@@ -1,25 +1,22 @@
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 
 namespace DurableFunctions.DurableEntities;
 
 public class BuildSucceeded
 {
-    [FunctionName("BuildSucceeded")]
-    public static async Task<HttpResponseMessage> HttpStart(
+    [Function(nameof(BuildSucceeded))]
+    public async Task<HttpResponseData> HttpStart(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "PR/{prId}/BuildSucceeded")] HttpRequestMessage req,
         int prId,
-        [DurableClient] IDurableEntityClient entityClient,
+        [DurableClient] DurableClientContext starter,
         ILogger log)
     {
-        var entity = new EntityId("PeerReviewAction", prId.ToString());
-        await entityClient.SignalEntityAsync(entity, "PrAction", PeerReviewActionTypes.BuildSucceeded);
-        return req.CreateResponse(HttpStatusCode.OK, "Done");
+        //TODO: Entity
+        throw new NotImplementedException();
+        // var entity = new EntityId("PeerReviewAction", prId.ToString());
+        // await entityClient.SignalEntityAsync(entity, "PrAction", PeerReviewActionTypes.BuildSucceeded);
+        // return req.CreateResponse(HttpStatusCode.OK, "Done");
     }
 }

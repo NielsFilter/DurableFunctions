@@ -1,25 +1,29 @@
-using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 
 namespace DurableFunctions.RequestApproval;
 
 public class ApproveRsvpFunction
 {
-    [FunctionName(nameof(RsvpHttp))]
-    public static async Task<HttpResponseMessage> RsvpHttp(
+    private readonly ILogger _logger;
+
+    public ApproveRsvpFunction(ILogger logger)
+    {
+        _logger = logger;
+    }
+    
+    [Function(nameof(RsvpHttp))]
+    public async Task<HttpResponseData> RsvpHttp(
         [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "RsvpHttp/{invitationId}/{isAccepted}")] HttpRequestMessage req,
         string invitationId,
         bool isAccepted,
-        [DurableClient] IDurableOrchestrationClient client)
+        [DurableClient] DurableClientContext client)
     {
-        await client.RaiseEventAsync(invitationId, "RsvpReceived", isAccepted);
-        return req.CreateResponse(HttpStatusCode.OK, "Done");
+        //TODO: Raise events
+        throw new NotImplementedException();
+        // await client.RaiseEventAsync(invitationId, "RsvpReceived", isAccepted);
+        // return req.CreateResponse(HttpStatusCode.OK, "Done");
     }
 }

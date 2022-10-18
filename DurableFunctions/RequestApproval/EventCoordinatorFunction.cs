@@ -1,21 +1,21 @@
-using System;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
 
 namespace DurableFunctions.RequestApproval;
 
-public static class EventCoordinatorFunction
+public class EventCoordinatorFunction
 {
-    [FunctionName(nameof(EventCoordinator))]
-    public static async Task EventCoordinator([OrchestrationTrigger] IDurableOrchestrationContext context)
+    private readonly ILogger _logger;
+
+    public EventCoordinatorFunction(ILogger logger)
+    {
+        _logger = logger;
+    }
+    
+    [Function(nameof(EventCoordinator))]
+    public async Task EventCoordinator([OrchestrationTrigger] TaskOrchestrationContext context)
     {
         var inviteReq = context.GetInput<InviteRequest>();
         await context.CallActivityAsync(nameof(InviteFriendFunction.InviteFriend), inviteReq.Friend);
@@ -24,7 +24,7 @@ public static class EventCoordinatorFunction
         var reminderDueTime = context.CurrentUtcDateTime.AddSeconds(15);
         var reminderTimeout = context.CreateTimer(reminderDueTime, timeoutCts.Token);
 
-        var rsvpForEvent = context.WaitForExternalEvent<bool>("RsvpReceived");
+        var rsvpForEvent = context.WaitForExternalEvent<bool>("RsvpReceived", timeoutCts.Token);
         if (reminderTimeout == await Task.WhenAny(reminderTimeout, rsvpForEvent))
         {
             await context.CallActivityAsync(nameof(RemindFriendFunction.RemindFriend), inviteReq.Friend);
@@ -43,15 +43,16 @@ public static class EventCoordinatorFunction
         }
     }
 
-    [FunctionName(nameof(InviteFriendHttp))]
-    public static async Task<HttpResponseMessage> InviteFriendHttp(
+    [Function(nameof(InviteFriendHttp))]
+    public static async Task<HttpResponseData> InviteFriendHttp(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post")]
-        HttpRequestMessage req,
-        [DurableClient] IDurableOrchestrationClient starter,
+        HttpRequestData req,
+        [DurableClient] DurableClientContext starter,
         ILogger log)
     {
-        var inviteReq = await req.Content.ReadAsAsync<InviteRequest>();
-        var instanceId = await starter.StartNewAsync(nameof(EventCoordinator), inviteReq);
+        var inviteReq = await req.GetFromBody<InviteRequest>();
+        
+        var instanceId = await starter.Client.ScheduleNewOrchestrationInstanceAsync(nameof(EventCoordinator), input: inviteReq);
 
         return starter.CreateCheckStatusResponse(req, instanceId);
     }

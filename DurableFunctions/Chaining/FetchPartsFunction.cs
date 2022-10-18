@@ -1,17 +1,22 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
 
 namespace DurableFunctions.Chaining;
 
-public static class FetchPartsFunction
+public class FetchPartsFunction
 {
-    [FunctionName(nameof(FetchParts))]
-    public static async Task<PartsResponse> FetchParts([ActivityTrigger] IDurableActivityContext context, ILogger log)
+    private readonly ILogger<FetchPartsFunction> _logger;
+
+    public FetchPartsFunction(ILogger<FetchPartsFunction> logger)
     {
-        log.LogInformation("Fetching parts");
+        _logger = logger;
+    }
+    
+    [Function(nameof(FetchParts))]
+    public async Task<PartsResponse> FetchParts([ActivityTrigger] TaskActivityContext context)
+    {
+        _logger.LogInformation("Fetching parts");
         await Task.Delay(RobotConstants.WorkflowStepDelay);
         var parts = new PartsResponse()
         {
@@ -22,12 +27,7 @@ public static class FetchPartsFunction
                 "Duct tape"
             }
         };
-        log.LogInformation($"Found parts {string.Join(", ", parts)}");
+        _logger.LogInformation($"Found parts {string.Join(", ", parts)}");
         return parts;
     }
-}
-
-public class PartsResponse
-{
-    public List<string> MyParts { get; set; }
 }

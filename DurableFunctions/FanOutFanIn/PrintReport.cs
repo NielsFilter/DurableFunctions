@@ -1,22 +1,21 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
-using Microsoft.Extensions.Logging;
+using Company.FunctionApp1.FanOutFanIn;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.DurableTask;
 
 namespace DurableFunctions.FanOutFanIn;
 
-public static class PrintReport
+public class PrintReport
 {
-    [FunctionName("PrintReport")]
-    public static async Task Print([ActivityTrigger] List<SentimentResult> results, ILogger log)
+    private readonly ISentimentReportGenerator _reportGenerator;
+
+    public PrintReport(ISentimentReportGenerator reportGenerator)
     {
-        await Task.Yield();
-        
-        log.LogInformation("Generating report...");
-        foreach (var resultItem in results)
-        {
-            log.LogInformation($"User {resultItem.UserId}\t{resultItem.Sentiment:D2}%");
-        }
+        _reportGenerator = reportGenerator;
+    }
+    
+    [Function(nameof(PrintReport))]
+    public async Task Print([ActivityTrigger] List<SentimentResult> results)
+    {
+        await _reportGenerator.GenerateReport(results);
     }
 }

@@ -1,20 +1,24 @@
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
 
 namespace DurableFunctions.RequestApproval;
 
-public static class InviteFriendFunction
+public class InviteFriendFunction
 {
-    [FunctionName(nameof(InviteFriend))]
-    public static async Task InviteFriend([ActivityTrigger] IDurableActivityContext context, ILogger log)
+    private readonly ILogger _logger;
+    public InviteFriendFunction(ILogger logger)
     {
-        var name = context.GetInput<string>();
-        log.LogInformation($"Sent invite to friend '{name}'!");
+        _logger = logger;
+    }
+    
+    [Function(nameof(InviteFriend))]
+    public async Task InviteFriend([ActivityTrigger] string name, TaskActivityContext context)
+    {
+        _logger.LogInformation($"Sent invite to friend '{name}'!");
         
         var acceptUrl = $"http://localhost:7071/api/RsvpHttp/{context.InstanceId}";
-        log.LogInformation($"To accept click here: '{acceptUrl}/true'");
-        log.LogInformation($"To decline click here: '{acceptUrl}/false'");
+        _logger.LogInformation($"To accept click here: '{acceptUrl}/true'");
+        _logger.LogInformation($"To decline click here: '{acceptUrl}/false'");
     }
 }

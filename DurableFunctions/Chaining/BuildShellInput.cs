@@ -1,4 +1,4 @@
-namespace DurableFunctions.Chaining;
+namespace Microsoft.DurableTask;
 
 public class BuildShellInput
 {

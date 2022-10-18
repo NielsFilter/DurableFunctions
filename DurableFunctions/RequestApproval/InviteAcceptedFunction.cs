@@ -1,15 +1,20 @@
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
 namespace DurableFunctions.RequestApproval;
 
-public static class InviteAcceptedFunction
+public class InviteAcceptedFunction
 {
-    [FunctionName(nameof(InviteAccepted))]
-    public static async Task InviteAccepted([ActivityTrigger] string name, ILogger log)
+    private readonly ILogger _logger;
+
+    public InviteAcceptedFunction(ILogger logger)
     {
-        log.LogInformation($"Woohoo! '{name}' said yes, we're going...");
+        _logger = logger;
+    }
+    
+    [Function(nameof(InviteAccepted))]
+    public async Task InviteAccepted([ActivityTrigger] string name)
+    {
+        _logger.LogInformation($"Woohoo! '{name}' said yes, we're going...");
     }
 }

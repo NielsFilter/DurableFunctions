@@ -1,29 +1,24 @@
-using System;
-using System;
-using System.Threading.Tasks;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Company.FunctionApp1.FanOutFanIn;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.DurableTask;
 using Microsoft.Extensions.Logging;
 
 namespace DurableFunctions.FanOutFanIn;
 
-public static class CalculateBuyProbability
+public class CalculateBuyProbability
 {
-    [FunctionName("CalculateBuyProbability")]
-    public static async Task<SentimentResult> Calculate([ActivityTrigger] int userId, ILogger log)
-    {
-        var rnd = new Random();
-        
-        // simulate some work here...
-        await Task.Delay(rnd.Next(0, 5_000));
-        var happinessSentiment = rnd.Next(0, 100);
+    private readonly ICalculateProbabilityService _calculateProbabilityService;
+    private readonly ILogger _logger;
 
-        log.LogInformation($"Completed sentiment calculation for user {userId}");
-        
-        return new SentimentResult
-        {
-            UserId = userId,
-            Sentiment = happinessSentiment
-        };
+    public CalculateBuyProbability(ICalculateProbabilityService calculateProbabilityService, ILogger logger)
+    {
+        _calculateProbabilityService = calculateProbabilityService;
+        _logger = logger;
+    }
+    
+    [Function(nameof(CalculateBuyProbability))]
+    public async Task<SentimentResult> Calculate([ActivityTrigger] int userId)
+    {
+        return await _calculateProbabilityService.Calculate(userId);
     }
 }
