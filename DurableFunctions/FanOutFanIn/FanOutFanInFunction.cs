@@ -8,12 +8,11 @@ namespace DurableFunctions.FanOutFanIn;
 public class FanOutFanInFunction
 {
     private readonly ILogger _logger;
-
     public FanOutFanInFunction(ILogger logger)
     {
         _logger = logger;
     }
-    
+
     [Function("FanOutFanIn_HttpStart")]
     public async Task<HttpResponseData> HttpStart(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post")]
@@ -22,20 +21,11 @@ public class FanOutFanInFunction
     {
         var input = await req.GetFromBody<SentimentUserInput>();
 
-        try
-        {
-            var instanceId = await starter.Client.ScheduleNewOrchestrationInstanceAsync(nameof(FanOutFanInFunction), input: input);
-          //  await starter.Client.WaitForInstanceCompletionAsync(instanceId, CancellationToken.None);
+        var instanceId = await starter.Client.ScheduleNewOrchestrationInstanceAsync(nameof(FanOutFanInFunction), input: input);
 
-            return starter.CreateCheckStatusResponse(req, instanceId);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
+        return starter.CreateCheckStatusResponse(req, instanceId);
     }
-    
+
     [Function(nameof(FanOutFanInFunction))]
     public async Task RunOrchestrator([OrchestrationTrigger] TaskOrchestrationContext context)
     {
@@ -52,6 +42,6 @@ public class FanOutFanInFunction
         await Task.WhenAll(tasks);
         
         var results = tasks.Select(x => x.Result);
-        await context.CallActivityAsync("PrintReport", results);
+        await context.CallActivityAsync(nameof(PrintReport), results);
     }
 }

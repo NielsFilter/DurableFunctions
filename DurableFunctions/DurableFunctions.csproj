@@ -26,4 +26,9 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>
+    <ItemGroup>
+      <Reference Include="DurableTask.AzureStorage">
+        <HintPath>bin\Debug\net7.0\.azurefunctions\DurableTask.AzureStorage.dll</HintPath>
+      </Reference>
+    </ItemGroup>
 </Project>

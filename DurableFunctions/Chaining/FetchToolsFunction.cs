@@ -18,15 +18,15 @@ public class FetchToolsFunction
     {
         _logger.LogInformation("Fetching tools");
         await Task.Delay(RobotConstants.WorkflowStepDelay);
-        var tools = new ToolsResponse()
+        var tools = new ToolsResponse
         {
-            MyTools = new List<string>()
+            MyTools = new List<string>
             {
                 "Screw Driver",
                 "Pliers",
                 "Hammer"
             },
-            MyFriendsTools = new List<string>()
+            MyFriendsTools = new List<string>
             {
                 "Soldering Iron",
                 "Toolbox"
