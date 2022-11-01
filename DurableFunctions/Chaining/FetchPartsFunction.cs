@@ -6,9 +6,9 @@ namespace DurableFunctions.Chaining;
 
 public class FetchPartsFunction
 {
-    private readonly ILogger<FetchPartsFunction> _logger;
+    private readonly ILogger _logger;
 
-    public FetchPartsFunction(ILogger<FetchPartsFunction> logger)
+    public FetchPartsFunction(ILogger logger)
     {
         _logger = logger;
     }
@@ -18,9 +18,9 @@ public class FetchPartsFunction
     {
         _logger.LogInformation("Fetching parts");
         await Task.Delay(RobotConstants.WorkflowStepDelay);
-        var parts = new PartsResponse()
+        var parts = new PartsResponse
         {
-            MyParts = new List<string>()
+            MyParts = new List<string>
             {
                 "Screws",
                 "Motors",
