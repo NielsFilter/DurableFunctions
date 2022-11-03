@@ -13,11 +13,12 @@ public class InviteFriendFunction
     }
     
     [Function(nameof(InviteFriend))]
-    public async Task InviteFriend([ActivityTrigger] string name, TaskActivityContext context)
+    public async Task InviteFriend([ActivityTrigger] SendInviteRequest input, TaskActivityContext context)
     {
-        _logger.LogInformation($"Sent invite to friend '{name}'!");
+        _logger.LogInformation($"Sent invite to friend '{input.Friend}'!");
         
-        var acceptUrl = $"http://localhost:7071/api/RsvpHttp/{context.InstanceId}";
+        var acceptUrl = $"http://localhost:7071/api/RsvpHttp/{input.InviteId}";
+        
         _logger.LogInformation($"To accept click here: '{acceptUrl}/true'");
         _logger.LogInformation($"To decline click here: '{acceptUrl}/false'");
     }

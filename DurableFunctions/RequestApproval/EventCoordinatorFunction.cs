@@ -17,20 +17,28 @@ public class EventCoordinatorFunction
     [Function(nameof(EventCoordinator))]
     public async Task EventCoordinator([OrchestrationTrigger] TaskOrchestrationContext context)
     {
-        var inviteReq = context.GetInput<InviteRequest>();
-        await context.CallActivityAsync(nameof(InviteFriendFunction.InviteFriend), inviteReq.Friend);
+        var inviteReq = context.GetContextInput<InviteFriendRequest>();
+        
+        // Send out invite
+        var sendInviteReq = new SendInviteRequest { Friend = inviteReq.Friend, InviteId = context.InstanceId };
+        await context.CallActivityAsync(nameof(InviteFriendFunction.InviteFriend), sendInviteReq);
 
+        // Set a reminder timer if no response
         using var timeoutCts = new CancellationTokenSource();
-        var reminderDueTime = context.CurrentUtcDateTime.AddSeconds(15);
+        var reminderDueTime = context.CurrentUtcDateTime.AddHours(48);
         var reminderTimeout = context.CreateTimer(reminderDueTime, timeoutCts.Token);
 
-        var rsvpForEvent = context.WaitForExternalEvent<bool>("RsvpReceived", timeoutCts.Token);
+        // Wait for reminder or RSVP (whichever comes first)
+        var rsvpForEvent = context.WaitForExternalEvent<bool>(EventNames.RsvpReceived, timeoutCts.Token);
         if (reminderTimeout == await Task.WhenAny(reminderTimeout, rsvpForEvent))
         {
-            await context.CallActivityAsync(nameof(RemindFriendFunction.RemindFriend), inviteReq.Friend);
+            // Send a reminder
+            inviteReq.ReminderCount++;
+            await context.CallSubOrchestratorAsync(nameof(EventCoordinator), input: inviteReq);
         }
         else
         {
+            // RSVP received
             timeoutCts.Cancel();
             if (rsvpForEvent.Result)
             {
@@ -50,7 +58,7 @@ public class EventCoordinatorFunction
         [DurableClient] DurableClientContext starter,
         ILogger log)
     {
-        var inviteReq = await req.GetFromBody<InviteRequest>();
+        var inviteReq = await req.GetFromBody<InviteFriendRequest>();
         
         var instanceId = await starter.Client.ScheduleNewOrchestrationInstanceAsync(nameof(EventCoordinator), input: inviteReq);
 
