@@ -13,11 +13,11 @@ public class HaveCoffeeFunction
         _logger = logger;
     }
     
-    [Function(nameof(HaveCoffeeFunction))]
-    public async Task Coffee([ActivityTrigger] TaskActivityContext context)
+    [Function(nameof(HaveCoffee))]
+    public async Task HaveCoffee([ActivityTrigger] TaskActivityContext context)
     {
         _logger.LogInformation("Make coffee");
-        _logger.LogInformation("Drink coffee");
+        _logger.LogInformation("Drinking coffee");
         
         await Task.Delay(RobotConstants.WorkflowStepDelay);
         
