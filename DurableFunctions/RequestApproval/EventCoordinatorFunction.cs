@@ -7,12 +7,6 @@ namespace DurableFunctions.RequestApproval;
 
 public class EventCoordinatorFunction
 {
-    private readonly ILogger _logger;
-
-    public EventCoordinatorFunction(ILogger logger)
-    {
-        _logger = logger;
-    }
     
     [Function(nameof(EventCoordinator))]
     public async Task EventCoordinator([OrchestrationTrigger] TaskOrchestrationContext context)
@@ -42,11 +36,14 @@ public class EventCoordinatorFunction
             timeoutCts.Cancel();
             if (rsvpForEvent.Result)
             {
+                // Yay!
                 await context.CallActivityAsync(nameof(InviteAcceptedFunction.InviteAccepted), inviteReq.Friend);
             }
             else
             {
-                await context.CallActivityAsync(nameof(FindNewFriendFunction.FindNewFriend), inviteReq.Friend);
+                // Invite a new friend
+                var newInviteReq = new InviteFriendRequest() { Friend = "Lauren" };
+                await context.CallSubOrchestratorAsync(nameof(EventCoordinator), input: newInviteReq);
             }
         }
     }
