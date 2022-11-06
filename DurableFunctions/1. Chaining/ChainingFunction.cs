@@ -27,12 +27,13 @@ public class ChainingFunction
     [Function(nameof(ChainingFunction))]
     public async Task RunOrchestrator([OrchestrationTrigger] TaskOrchestrationContext context)
     {
-        var tools = await context.CallActivityAsync<ToolsResponse>(nameof(FetchToolsFunction.FetchTools));
-        var parts = await context.CallActivityAsync<PartsResponse>(nameof(FetchPartsFunction.FetchParts));
-        
+        var toolsTask = context.CallActivityAsync<ToolsResponse>(nameof(FetchToolsFunction.FetchTools));
+        var partsTask = context.CallActivityAsync<PartsResponse>(nameof(FetchPartsFunction.FetchParts));
+        await Task.WhenAll(toolsTask, partsTask);
+
         await context.CallActivityAsync<bool>(nameof(HaveCoffeeFunction.HaveCoffee));
 
-        var buildInput = new BuildShellInput { Tools = tools, Parts = parts };
+        var buildInput = new BuildShellInput { Tools = toolsTask.Result, Parts = partsTask.Result };
         var robot = await context.CallActivityAsync<RobotResponse>(nameof(BuildShellFunction.BuildShell), buildInput);
         robot = await context.CallActivityAsync<RobotResponse>(nameof(ProgramRobotFunction.ProgramRobot), robot);
         robot = await context.CallActivityAsync<RobotResponse>(nameof(TestRobotFunction.TestRobot), robot);
