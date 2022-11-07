@@ -36,7 +36,7 @@ public class FanOutFanInFunction
         var tasks = new List<Task<SentimentResult>>();
         for (var userId = 1; userId <= input.NumberOfUsers; userId++)
         {
-            tasks.Add(context.CallActivityAsync<SentimentResult>(nameof(CalculateBuyProbability), userId));
+            tasks.Add(context.CallActivityAsync<SentimentResult>(nameof(CalculateUserSentiment), userId));
         }
 
         await Task.WhenAll(tasks);
