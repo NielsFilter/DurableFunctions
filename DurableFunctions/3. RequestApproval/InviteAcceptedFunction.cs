@@ -13,8 +13,9 @@ public class InviteAcceptedFunction
     }
     
     [Function(nameof(InviteAccepted))]
-    public async Task InviteAccepted([ActivityTrigger] string name)
+    public bool InviteAccepted([ActivityTrigger] string name)
     {
         _logger.LogInformation($"Woohoo! '{name}' said yes, we're going...");
+        return true;
     }
 }

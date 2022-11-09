@@ -13,7 +13,7 @@ public class InviteFriendFunction
     }
     
     [Function(nameof(InviteFriend))]
-    public async Task InviteFriend([ActivityTrigger] SendInviteRequest input, TaskActivityContext context)
+    public bool InviteFriend([ActivityTrigger] SendInviteRequest input, TaskActivityContext context)
     {
         _logger.LogInformation($"Sent invite to friend '{input.Friend}'!");
         
@@ -21,5 +21,6 @@ public class InviteFriendFunction
         
         _logger.LogInformation($"To accept click here: '{acceptUrl}/true'");
         _logger.LogInformation($"To decline click here: '{acceptUrl}/false'");
+        return true;
     }
 }
