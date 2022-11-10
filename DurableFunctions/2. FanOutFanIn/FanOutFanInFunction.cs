@@ -7,12 +7,6 @@ namespace DurableFunctions.FanOutFanIn;
 
 public class FanOutFanInFunction
 {
-    private readonly ILogger _logger;
-    public FanOutFanInFunction(ILogger logger)
-    {
-        _logger = logger;
-    }
-
     [Function("FanOutFanIn_HttpStart")]
     public async Task<HttpResponseData> HttpStart(
         [HttpTrigger(AuthorizationLevel.Anonymous, "post")]
@@ -30,7 +24,6 @@ public class FanOutFanInFunction
     public async Task RunOrchestrator([OrchestrationTrigger] TaskOrchestrationContext context)
     {
         var input = context.GetContextInput<SentimentUserInput>();
-        _logger.LogInformation($"Found {input.NumberOfUsers} users to queue");
 
         // Get a list of N work items to process in parallel.
         var tasks = new List<Task<SentimentResult>>();
